@@ -3,32 +3,30 @@ import pandas as pd
 import numpy as np
 
 # 1. Configurações gerais do app
-st.set_page_config(page_title="Exemplo de Simulações", layout="wide")
+st.set_page_config(page_title="Simulações", layout="wide")
 
 # 2. Barra lateral - Seções para as simulações
 st.sidebar.header("Parâmetros de Simulação")
 
-with st.sidebar.expander("Simulação de Consórcio", expanded=True):
-    valor_inicial_consorcio = st.number_input("Valor inicial do consórcio", value=20000, step=1000)
+with st.sidebar.expander("Consórcio", expanded=True):
+    valor_inicial_consorcio = st.number_input("Valor inicial", value=20000, step=1000)
     prazo_consorcio = st.slider("Prazo (meses)", min_value=1, max_value=120, value=60, step=1)
     taxa_admin = st.number_input("Taxa de administração (%)", value=2.0)
 
-with st.sidebar.expander("Simulação Circulana", expanded=False):
-    valor_inicial_circulana = st.number_input("Valor inicial do Circulana", value=10000, step=1000)
+with st.sidebar.expander("Circulana", expanded=False):
+    valor_inicial_circulana = st.number_input("Valor inicial", value=10000, step=1000)
     prazo_circulana = st.slider("Prazo (meses) - Circulana", min_value=1, max_value=120, value=48, step=1)
     taxa_circulana = st.number_input("Taxa Circulana (%)", value=1.5)
 
 # 3. Exemplo de texto descritivo no corpo principal
 st.write("""
-### Exemplo de Análises e Visualizações
+### Análise e comparação dos produtos
 
-Abaixo, mostramos como você pode continuar usando suas funcionalidades de 
-visualização (como dados aleatórios) **ao mesmo tempo** que adiciona configurações 
-de simulação na barra lateral.
+Personalize os parâmetros de simulação na barra lateral para analisar e comparar de forma interativa.
 """)
 
 # 4. Exemplo de inputs "tradicionais" no corpo principal
-all_users = ["Alice", "Bob", "Charly"]
+all_users = ["Matheus", "Gabriel", "Fernando"]
 with st.container():
     users = st.multiselect("Selecione usuários", all_users, default=all_users)
     rolling_average = st.checkbox("Rolling average (média móvel)", value=False)
