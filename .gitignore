@@ -136,6 +136,11 @@ ENV/
 env.bak/
 venv.bak/
 
+# CSV
+
+*.csv
+.csv
+
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -169,3 +174,10 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+
+# Excluir arquivos de configuracao
+.DS_Store
+.gitattributes
+.vscode/
+
