@@ -2,10 +2,17 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.csv
+*.png
+*.pkl
+.vscode
+.gitattributes
+.DS_Store
 
 # C extensions
 *.so
-
+santander_cotas_pre.csv
+expanded_cotas.csv
 # Distribution / packaging
 .Python
 build/
@@ -136,11 +143,6 @@ ENV/
 env.bak/
 venv.bak/
 
-# CSV
-
-*.csv
-.csv
-
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -175,9 +177,6 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
+# Credentials
 
-# Excluir arquivos de configuracao
-.DS_Store
-.gitattributes
-.vscode/
-
+credentials.json

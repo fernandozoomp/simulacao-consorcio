@@ -77,16 +77,50 @@ def load_and_preprocess_apys(filepath):
     apys_df.drop(labels=['APY_REWARD', 'APY_BASE', 'TVL'], axis=1, inplace=True)
     apys_df["DATE"] = pd.to_datetime(apys_df["DATE"]).dt.date
     return apys_df
+
 def path_dict_to_df(type):
     """Reads all files in the given dictionary and concatenates them into a single DataFrame."""
     dict_path = {
         'aave': 'apys_aave_v2_USDC.csv',
         'compound': 'apys_compound_USDC.csv',
-        'uniswap': 'apys_uniswap_USDC.csv',
-        'balancer': 'apys_balancer_USDC.csv',
+        'uniswap': 'apys_uniswap_v3-USDC-USDT.csv',
+        'balancer': 'apys_balancer_v3_USDC.csv',
     }
     df = load_and_preprocess_apys(dict_path[type])
     return df
+
+
+
+def aplication_cdi(amount, date_month):
+    """
+    Calculates the return based on the CDI for the month of the given date.
+    If the exact month is not available, uses the most recent month before the given date.
+
+    Parameters:
+    amount (float): The initial investment value.
+    date_month (np.datetime64): The date to determine the month and year for CDI calculation.
+
+    Returns:
+    float: The calculated return based on the CDI for the month.
+    """
+    df_cdi = DataFrameLoader.load_and_preprocess_cdi()
+    if not isinstance(date_month, pd.Timestamp):
+        date_month = pd.to_datetime(date_month)
+        
+    # Check for an exact match first
+    df_exact = df_cdi[df_cdi['date_month'] == date_month]
+    if not df_exact.empty:
+        cdi = float(df_exact['cdi'].iloc[0])
+    else:
+        # Find the most recent month before the given date
+        df_before = df_cdi[df_cdi['date_month'] < date_month]
+        if df_before.empty:
+            raise ValueError("No CDI data available for the given date or before.")
+        
+        df_before_sorted = df_before.sort_values('date_month')
+        cdi = float(df_before_sorted.iloc[-1]['cdi'])
+        
+    return amount * (1 + cdi*0.85)
 
 
 def load_and_preprocess_grupo(filepath, number_elements=None):
@@ -97,6 +131,8 @@ def load_and_preprocess_grupo(filepath, number_elements=None):
         df = pd.read_csv(filepath, nrows=number_elements, low_memory=False)
     else:
         df = pd.read_csv(filepath, low_memory=False)
+
+    df.drop(columns=['id_quotas_santander', 'cd_grupo', 'cd_cota', 'cd_produto', 'nm_situ_entrega_bem', 'created_at', 'is_processed', 'cd_versao_cota', 'cd_tipo_pessoa', 'pz_comercializacao', 'vl_lance_proprio'], inplace=True)
     rename_map = {
         "pc_fc_pago": "FC_paid_%",
         "pc_fundo_reserva": "FR_%",
@@ -174,25 +210,44 @@ def calcular_rentabilidade_mes(valor, data, apys_df=None, type='circulana'):
             return valor * (1 + 0.0007) - gas_fee
     else:
         return valor
+
+def find_corrected_values(given_value, last_known_year, target_year):
+    """
+    Find the corrected value for a target year based on a given value in the last known year,
+    proportionally to the FIPE data.
     
-def get_corrected_value(vl_bem_atual, year, month, data_entrada):
-    vl_bem_atual = float(vl_bem_atual)
+    Parameters:
+    - given_value: The known value for last_known_year
+    - last_known_year: The year of the given value
+    - target_year: The year for which we want to find the corrected value
+    
+    Returns:
+    - The corrected value for the target year
+    """
+    # Load the correction dataframe
     loader = DataFrameLoader()
     df_correction = loader.load_and_preprocess_correction('FIPE-GRUPO-655-FIPE.csv')
-    # Find exact match or closest value
-    item = df_correction[df_correction[f'valor_{year}'] == vl_bem_atual]
-    if item.empty:
-        closest_index = (df_correction[f'valor_{year}'] - vl_bem_atual).abs().idxmin()
-        item = df_correction.loc[[closest_index]]  # Ensure item is a DataFrame
-
-    # Calculate new date and corresponding year
-    data_entrada = pd.to_datetime(data_entrada)
-    data_corrigida = data_entrada + pd.DateOffset(months=month)
-    year_corrigido = data_corrigida.year
-
-    # Retrieve corrected value and ensure it's returned as a float
-    valor_corrigido = item[f'valor_{year_corrigido}'].values[0]
-    return float(valor_corrigido)
+    
+    # Identify the necessary columns
+    last_known_col = f"valor_{last_known_year}"
+    target_col = f"valor_{target_year}"
+    
+    if last_known_col not in df_correction.columns or target_col not in df_correction.columns:
+        return given_value  # Return original value if columns don't exist
+    
+    # Iterate through the dataframe to find a proportional match
+    for _, row in df_correction.iterrows():
+        if pd.isna(row[last_known_col]) or pd.isna(row[target_col]):
+            continue
+        
+        try:
+            # Find proportional factor from last known year to target year
+            proportion_factor = row[target_col] / row[last_known_col]
+            return given_value * proportion_factor
+        except (ZeroDivisionError, ValueError):
+            continue
+    
+    return given_value
 
 class DataFrameLoader:
     _instance = None
@@ -236,6 +291,14 @@ class DataFrameLoader:
             self.df_correction['inicio_grupo'] = pd.to_datetime(self.df_correction['inicio_grupo'])
             self.df_correction['termino_grupo'] = pd.to_datetime(self.df_correction['termino_grupo'])
         return self.df_correction
+    def load_and_preprocess_cdi(filepath = 'cdi.csv'):
+        """Load and preprocess the CDI DataFrame."""
+        df_cdi = pd.read_csv(filepath)
+        df_cdi.rename(columns={'Data': 'date_month', 'Taxa de juros - CDI / Over - acumulada no mês': 'cdi'}, inplace=True)
+        df_cdi['cdi'] = df_cdi['cdi'].str.replace(',', '.').astype(float)/100
+        df_cdi['date_month'] = pd.to_datetime(df_cdi['date_month'], format='%Y-%m')
+        df_cdi = df_cdi[df_cdi['date_month'] >= pd.Timestamp('2020-01')].reset_index(drop=True)
+        return df_cdi
 
 def correct_real(initial_date, initial_amount=1.0, final_date=None, correction_type='daily'):
     """
@@ -321,4 +384,3 @@ def convert_currency(date, amount, to_currency='usd'):
         return round(amount * exchange_rate, 4)  # USD → BRL
     else:
         raise ValueError("Invalid currency conversion type. Use 'usd' or 'brl'.")
-
