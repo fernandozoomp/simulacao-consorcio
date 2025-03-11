@@ -293,6 +293,9 @@ class DataFrameLoader:
         return self.df_correction
     def load_and_preprocess_cdi(filepath = 'cdi.csv'):
         """Load and preprocess the CDI DataFrame."""
+        if not os.path.exists(filepath):
+            folder_id = get_folder_id(drive_service, "Base_simulacao")
+            fetch_file_from_google_drive(drive_service, filepath, filepath, folder_id=folder_id)
         df_cdi = pd.read_csv(filepath)
         df_cdi.rename(columns={'Data': 'date_month', 'Taxa de juros - CDI / Over - acumulada no mês': 'cdi'}, inplace=True)
         df_cdi['cdi'] = df_cdi['cdi'].str.replace(',', '.').astype(float)/100
