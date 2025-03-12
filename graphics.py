@@ -25,14 +25,14 @@ def compare_consorcio_circulana(df_expanded_consorcio, df_expanded_circulana, se
     total_cost_circulana = df_expanded_circulana['FC_paid'].sum() + df_expanded_circulana['TX_adm_monthly'].sum()
     
     # Display total costs using Streamlit
-    st.metric("Total Cost Consórcio", f"R$ {total_cost_consorcio:,.2f}")
-    st.metric("Total Cost Circulana", f"R$ {total_cost_circulana:,.2f}")
+    st.metric("Consórcio", f"R$ {total_cost_consorcio:,.2f}")
+    st.metric("Circulana", f"R$ {total_cost_circulana:,.2f}")
     
     # Plot comparison
     fig, ax = plt.subplots(figsize=(14, 8))
-    ax.bar(['Consórcio', 'Circulana'], [total_cost_consorcio, total_cost_circulana], label='Total Cost')
-    ax.set_xlabel('Option')
-    ax.set_ylabel('Amount (R$)')
+    ax.bar(['Consórcio', 'Circulana'], [total_cost_consorcio, total_cost_circulana], label='Custo Total')
+    ax.set_xlabel('Produtos')
+    ax.set_ylabel('Valor (R$)')
     ax.set_title('Custo total Consórcio vs Circulana')
     ax.legend()
     
@@ -60,7 +60,7 @@ def display_visualizations(df_expanded_consorcio, df_grupo):
     selected_id = df_expanded_consorcio["id"].unique()[0]  # Select the first quota ID for demonstration
     quota_df = df_expanded_consorcio[df_expanded_consorcio["id"] == selected_id]
 
-    st.write(f"### Quota {selected_id} Details")
+    st.write(f"### Detalhes da Cota {selected_id}")
     st.write(quota_df)
 
     # Plot tx_adm_paid for all quotas
@@ -170,7 +170,7 @@ def plot_quota_comparison(df_consorcio, df_circulana, quota_id):
     plt.plot(circulana_q["month"], circulana_q["monthly_cost"], label="Custo Mensal Circulana", marker="s")
     plt.xlabel("Mês")
     plt.ylabel("Custo Mensal")
-    plt.title(f"Custos Mensais para a Quota {quota_id}")
+    plt.title(f"Evolução dos custos da Cota {quota_id}")
     plt.legend()
     plt.grid()
     st.pyplot(plt.gcf())

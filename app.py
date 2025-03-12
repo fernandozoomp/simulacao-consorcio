@@ -2,9 +2,23 @@ import streamlit as st
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-from load_functions import path_dict_to_df, load_and_preprocess_grupo, fetch_file_from_google_drive, get_folder_id, drive_service
+from load_functions import path_dict_to_df, load_and_preprocess_grupo,fetch_file_from_google_drive, get_folder_id, drive_service
 from cotas_processor import expandir_cotas
 from graphics import compare_consorcio_circulana, plot_quota_comparison
+
+# =====================================================
+# 1. Configurações gerais do app
+# =====================================================
+st.set_page_config(
+    page_title="Comparação: Consórcio x Circulana",
+    layout="wide"
+)
+st.sidebar.title("Parâmetros")
+st.sidebar.header("Circulana")
+
+with st.sidebar.expander("Filtros", expanded=True):
+    place_of_interest = st.selectbox("Select Place of Interest", ['aave', 'compound', 'uniswap', 'balancer'], index=0)
+    collateral_percentage = st.slider("Collateral Percentage", 0.0, 1.0, 0.4)
 
 @st.cache_data
 def load_data(collateral_percentage, place_of_interest):
@@ -27,10 +41,6 @@ def load_data(collateral_percentage, place_of_interest):
             df_grupo, colateral=collateral_percentage, apys_df=apys_df, tx_adm_circulana=None
         )
     return df_expanded_consorcio, df_expanded_circulana, df_grupo
-
-st.sidebar.header("Filters")
-place_of_interest = st.sidebar.selectbox("Select Place of Interest", ['aave', 'compound', 'uniswap', 'balancer'], index=0)
-collateral_percentage = st.sidebar.slider("Collateral Percentage", 0.0, 1.0, 0.4)
 
 # Load data
 df_expanded_consorcio, df_expanded_circulana, df_grupo = load_data(collateral_percentage, place_of_interest)
@@ -84,18 +94,25 @@ if show_advanced_filters:
         plot_quota_comparison(df_expanded_consorcio, df_expanded_circulana, quota_id)
 
 # Display Quota Details
-st.write("### Quota Details")
-st.write(filtered_consorcio)
+st.title("Consórcio x Circulana")
+st.write("""
+    Comparamos as informações do Consórcio com o Circulana, para avaliar custos e valores envolvidos.
+    """)
 
-# Compare costs
-st.write("### Custo total do grupo para os clientes")
-compare_consorcio_circulana(
+st.header("Análise do Grupo")
+with st.expander("Visão geral", expanded=False):
+    st.write("### Valor Total Pago")
+    compare_consorcio_circulana(
     df_expanded_consorcio, df_expanded_circulana,
     tx_adm_filter=None if not show_advanced_filters else tx_adm_filter,
     month_contemplated=selected_contemplation_month if show_advanced_filters and selected_contemplation_month != "All" else None,
     month_canceled=selected_cancellation_month if show_advanced_filters and selected_cancellation_month != "All" else None
 )
+    st.write(filtered_consorcio)
+
+# Compare costs
+st.header("Análise da Cota")
 
 for quota_id in selected_quotas:
-    st.write(f"#### Quota {quota_id}")
-    plot_quota_comparison(filtered_consorcio, filtered_circulana, quota_id)
+    with st.expander(f"Cenário: Cota {quota_id} (Taxa adm: {quota_id}, Crédito inicial {1000})", expanded=False):
+        plot_quota_comparison(filtered_consorcio, filtered_circulana, quota_id)
