@@ -114,5 +114,5 @@ with st.expander("Visão geral", expanded=False):
 st.header("Análise da Cota")
 
 for quota_id in selected_quotas:
-    with st.expander(f"Cenário: Cota {quota_id} (Taxa adm: {quota_id}, Crédito inicial {1000})", expanded=False):
+    with st.expander(f"Cenário: Cota {quota_id} (Taxa adm: {df_grupo[df_grupo['id']==quota_id]['TX_adm_%'].iloc[0]}%, Crédito inicial: R${df_grupo[df_grupo['id']==quota_id]['vl_bem'].iloc[0]})", expanded=False):
         plot_quota_comparison(filtered_consorcio, filtered_circulana, quota_id)

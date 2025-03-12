@@ -170,7 +170,7 @@ def plot_quota_comparison(df_consorcio, df_circulana, quota_id):
     plt.plot(circulana_q["month"], circulana_q["monthly_cost"], label="Custo Mensal Circulana", marker="s")
     plt.xlabel("Mês")
     plt.ylabel("Custo Mensal")
-    plt.title(f"Evolução dos custos da Cota {quota_id}")
+    plt.title(f"Evolução dos gastos com correção do bem")
     plt.legend()
     plt.grid()
     st.pyplot(plt.gcf())
@@ -178,25 +178,25 @@ def plot_quota_comparison(df_consorcio, df_circulana, quota_id):
 
     # Plot tx_adm_paid
     plt.figure(figsize=(12, 5))
-    plt.plot(consorcio_q["month"], (consorcio_q["monthly_cost"]).cumsum(), label="Custos extras consórcio", marker="o")
-    plt.plot(circulana_q["month"], (circulana_q["monthly_cost"]).cumsum(), label="Custos extras circulana", marker="s")
+    plt.plot(consorcio_q["month"], (consorcio_q["monthly_cost"]).cumsum(), label="Valor pago Consórcio", marker="o")
+    plt.plot(circulana_q["month"], (circulana_q["monthly_cost"]).cumsum(), label="Valor pago Circulana", marker="s")
     width = 20
     plt.bar(
         circulana_q["month"], 
         circulana_q['profits_colateral'].diff(), 
         width=width, 
-        label="Lucros Circulana", 
+        label="Rentabilidade Circulana", 
         alpha=0.6, 
         color="red"
     )
-    plt.plot(circulana_q["month"], (circulana_q["monthly_cost"]).cumsum() - circulana_q['profits_colateral'].diff().cumsum(), label="Lucros Bem", alpha=0.6, color="blue")
+    plt.plot(circulana_q["month"], (circulana_q["monthly_cost"]).cumsum() - circulana_q['profits_colateral'].diff().cumsum(), label="Valor Pago - rentabilidade", alpha=0.6, color="blue")
 
     # Add a dashed line for vl_bem
     plt.plot(consorcio_q["month"], consorcio_q["vl_bem_corrigido"], color='green', linestyle='--', label='Valor do Bem')
 
     plt.xlabel("Mês")
-    plt.ylabel("Custos extras além do fundo comum")
-    plt.title(f"Custos extras da cota {quota_id}")
+    plt.ylabel("Valor em R$")
+    plt.title(f"Valor total pago")
     plt.legend()
     plt.grid()
     st.pyplot(plt.gcf())
@@ -204,17 +204,17 @@ def plot_quota_comparison(df_consorcio, df_circulana, quota_id):
 
     # Plot amount received
     plt.figure(figsize=(12, 5))
-    plt.plot(consorcio_q["month"], consorcio_q["amount_received"], label="Consórcio valor a receber", marker="o")
-    plt.plot(circulana_q["month"], circulana_q["amount_received_bem"], label="Circulana valor a receber (Bem)", marker="^")
+    plt.plot(consorcio_q["month"], consorcio_q["amount_received"], label="Consórcio", marker="o")
+    plt.plot(circulana_q["month"], circulana_q["amount_received_bem"], label="Circulana", marker="^")
     
     # Add a red vertical line at the month the quota stops being contemplated False to True
     contemplation_change_month = circulana_q.loc[circulana_q['contemplated'].diff() == 1, 'month']
     if not contemplation_change_month.empty:
-        plt.axvline(x=contemplation_change_month.iloc[0] - pd.DateOffset(months=1), color='red', linestyle='--', label='Contemplation Change (Previous Month)')
+        plt.axvline(x=contemplation_change_month.iloc[0] - pd.DateOffset(months=1), color='red', linestyle='--', label='Contemplação')
     
     plt.xlabel("Mês")
     plt.ylabel("Valor em R$")
-    plt.title(f"Crédito a resgatar quota {quota_id}")
+    plt.title(f"Contemplação não resgatada")
     plt.legend()
     plt.grid()
     st.pyplot(plt.gcf())
@@ -224,17 +224,17 @@ def plot_quota_comparison(df_consorcio, df_circulana, quota_id):
     plt.figure(figsize=(12, 5))
     consorcio_q_temp = consorcio_q.copy()
     consorcio_q_temp.loc[consorcio_q_temp["contemplated"], "amount_received"] = 0
-    plt.plot(consorcio_q_temp["month"], consorcio_q_temp["amount_received"], label="Consórcio valor a receber", marker="o")
-    plt.plot(circulana_q["month"], circulana_q["amount_received_colateral"], label="Circulana valor a receber (Colateral)", marker="s")
+    plt.plot(consorcio_q_temp["month"], consorcio_q_temp["amount_received"], label="Consórcio", marker="o")
+    plt.plot(circulana_q["month"], circulana_q["amount_received_colateral"], label="Circulana", marker="s")
     
     # Add a red vertical line at the month the quota stops being contemplated False to True
     contemplation_change_month = circulana_q.loc[circulana_q['contemplated'].diff() == 1, 'month']
     if not contemplation_change_month.empty:
-        plt.axvline(x=contemplation_change_month.iloc[0] - pd.DateOffset(months=1), color='red', linestyle='--', label='Contemplation Change (Previous Month)')
+        plt.axvline(x=contemplation_change_month.iloc[0] - pd.DateOffset(months=1), color='red', linestyle='--', label='Contemplação')
     
     plt.xlabel("Mês")
     plt.ylabel("Valor em R$")
-    plt.title(f"Crédito já resgatado quota {quota_id}")
+    plt.title(f"Contemplação com adição de collateral")
     plt.legend()
     plt.grid()
     st.pyplot(plt.gcf())
@@ -242,8 +242,9 @@ def plot_quota_comparison(df_consorcio, df_circulana, quota_id):
 
 
     # Create a summary dictionary with categories as columns
+    st.header("Resumo da comparação")
     summary_data = {
-        "Metric": ["Consórcio (R$)", "Circulana (R$)"],
+        "Produto": ["Consórcio (R$)", "Circulana (R$)"],
         "TX_adm": [
             consorcio_q["TX_adm_monthly"].sum(),
             circulana_q["TX_adm_monthly"].sum()
