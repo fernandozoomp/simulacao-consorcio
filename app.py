@@ -87,7 +87,8 @@ if show_advanced_filters:
     filtered_circulana = df_expanded_circulana[df_expanded_circulana['id'].isin(filtered_grupo['id'])]
 
     # Allow user to select one quota for more detailed analysis
-    quota_id = st.sidebar.selectbox("Select Quota ID for Detailed Visualization", options=filtered_grupo['id'].unique())
+    options = [q for q in filtered_grupo['id'].unique() if q != 254307]
+    quota_id = st.sidebar.selectbox("Select Quota ID for Detailed Visualization", options=options)
 
     if quota_id:
         st.write(f"### Detailed View of Quota {quota_id}")
