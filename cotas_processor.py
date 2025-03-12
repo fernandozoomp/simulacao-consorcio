@@ -3,7 +3,7 @@ import warnings
 import pandas as pd
 from load_functions import convert_currency, calcular_rentabilidade_mes, find_corrected_values, aplication_cdi
 
-def expandir_cotas(df, colateral=0.4, apys_df=None, compounded=False, tx_adm_circulana=None):
+def expandir_cotas(df, apys_df=None, compounded=False, tx_adm_circulana=None):
     """Expand the DataFrame for each month."""
     expanded_rows_consorcio = []
     expanded_rows_circulana = []
@@ -42,11 +42,12 @@ def expandir_cotas(df, colateral=0.4, apys_df=None, compounded=False, tx_adm_cir
         first_month = True
         bem_contemplacao_dolar_show = 0.0
         total_seguro = 0.0
+        valor_colateral = 0.0
 
         end_date = min(filter(pd.notna, [
             pd.Timestamp(dt_cancel) if pd.notna(dt_cancel) else None,
             start_date + pd.DateOffset(months=contracted_period),
-            pd.Timestamp.today()
+            pd.Timestamp('2025-02-01')
         ]))
 
         months = pd.date_range(start=start_date, end=end_date, freq='MS')
@@ -93,8 +94,7 @@ def expandir_cotas(df, colateral=0.4, apys_df=None, compounded=False, tx_adm_cir
                 if not bem_contemplacao:
                     bem_contemplacao = max_vl_bem_corrigido
                     bem_contemplacao_dolar = convert_currency(date=month, amount=bem_contemplacao)
-
-                valor_colateral = colateral * bem_contemplacao_dolar
+                    valor_colateral = bem_contemplacao - FC_already_paid
                 if consorcio_cdi == 0.0:
                     consorcio_cdi = bem_contemplacao
                 else:
@@ -123,6 +123,7 @@ def expandir_cotas(df, colateral=0.4, apys_df=None, compounded=False, tx_adm_cir
                 "canceled": canceled,
                 "contemplated": contemplated,
                 "vl_bem": max_vl_bem_corrigido if not bem_contemplacao else bem_contemplacao,
+                "vl_bem_corrigido": max_vl_bem_corrigido,
                 "vl_devolver": vl_devolver if canceled else 0.0,
                 "contracted_period": contracted_period,
                 "embedded_bid_vl": embedded_bid_vl,
@@ -154,13 +155,13 @@ def expandir_cotas(df, colateral=0.4, apys_df=None, compounded=False, tx_adm_cir
                 "TX_adm_%": tx_adm_circulana,
                 "colateral_w_profits": rentabilidade_colateral_real,
                 "bem_contemplacao_w_profits": rentabilidade_bem_contemplacao_real,
-                "colateral_initial": colateral * bem_contemplacao if contemplated else 0.0,
+                "colateral_initial": valor_colateral,
                 "TX_adm_paid": TX_already_paid_circulana if not canceled else 0.0,
                 "TX_adm_monthly": tx_adm_circulana_value,
                 "profits_colateral": profits_colateral,
                 "profits_bem": profits_bem,
                 "bem_contemplacao_dolar": bem_contemplacao_dolar_show,
-                "bem_contemplacao_dolar_colateral": bem_contemplacao_dolar_show * colateral,
+                "bem_contemplacao_dolar_colateral": bem_contemplacao_dolar_show * (valor_colateral / bem_contemplacao) if bem_contemplacao else 0.0,
             }
             circulana_dict = {**common_values, **circulana_specific}
             expanded_rows_circulana.append(circulana_dict)
