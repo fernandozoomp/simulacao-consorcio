@@ -21,7 +21,7 @@ with st.sidebar.expander("Filtros", expanded=True):
     collateral_percentage = st.slider("Collateral Percentage", 0.0, 1.0, 0.4)
 
 @st.cache_data
-def load_data(collateral_percentage, place_of_interest):
+def load_data(place_of_interest):
     if collateral_percentage == 0.4 and place_of_interest == "aave":
         file_path_consorcio = 'df_expanded_consorcio.pkl'
         file_path_circulana = 'df_expanded_circulana.pkl'
@@ -38,12 +38,12 @@ def load_data(collateral_percentage, place_of_interest):
         apys_df = path_dict_to_df(place_of_interest)
         df_grupo = load_and_preprocess_grupo('santander_cotas_pre_grupo_md_cota655_202502211443.csv')
         df_expanded_consorcio, df_expanded_circulana = expandir_cotas(
-            df_grupo, colateral=collateral_percentage, apys_df=apys_df, tx_adm_circulana=None
+            df_grupo, apys_df=apys_df, tx_adm_circulana=None
         )
     return df_expanded_consorcio, df_expanded_circulana, df_grupo
 
 # Load data
-df_expanded_consorcio, df_expanded_circulana, df_grupo = load_data(collateral_percentage, place_of_interest)
+df_expanded_consorcio, df_expanded_circulana, df_grupo = load_data(place_of_interest)
 
 # Default quotas to display
 selected_quotas = [30506940, 30438293]
