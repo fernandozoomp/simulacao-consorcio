@@ -50,7 +50,7 @@ pillow==11.1.0
 platformdirs==4.3.6
 prompt_toolkit==3.0.50
 proto-plus==1.26.0
-protobuf==5.29.3
+protobuf==5.29.5
 psutil==7.0.0
 ptyprocess==0.7.0
 pure_eval==0.2.3
